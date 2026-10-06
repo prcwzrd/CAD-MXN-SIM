@@ -3,25 +3,34 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>QUANT-DEPTH: CAD/MXN Liquidity Vacuum Simulator</title>
+  <title>QUANT-DEPTH // MATTHEW PIERCE</title>
   <!-- Chart.js CDN -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     :root {
-      --bg-dark: #0B0E14;
-      --panel-bg: #151D2A;
-      --border-color: #2A364F;
-      --accent-blue: #3B82F6;
-      --accent-green: #10B981;
-      --accent-red: #EF4444;
-      --text-main: #F8FAFC;
-      --text-muted: #94A3B8;
+      --bg-black: #000000;
+      --panel-dark: #0A0D12;
+      --border-platinum: rgba(229, 228, 226, 0.25);
+      
+      /* Metallic Platinum Palette */
+      --plat-light: #FFFFFF;
+      --plat-mid: #E5E4E2;
+      --plat-dark: #8C8C8C;
+      --plat-deep: #404040;
+      
+      /* Chart Accent States (Platinum Tinted) */
+      --plat-red: #FF4D4D;
+      --plat-green: #00E676;
+      --plat-blue: #E0E8F5;
+
+      --text-main: #F2F2F2;
+      --text-muted: #8E95A2;
     }
 
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
 
     body {
-      background-color: var(--bg-dark);
+      background-color: var(--bg-black);
       color: var(--text-main);
       display: flex;
       flex-direction: column;
@@ -30,34 +39,80 @@
       padding: 16px;
     }
 
+    /* Top Centered Header */
     header {
       display: flex;
-      justify-content: space-between;
+      flex-direction: column;
       align-items: center;
-      padding-bottom: 12px;
-      border-bottom: 1px solid var(--border-color);
+      justify-content: center;
+      padding-bottom: 14px;
+      border-bottom: 1px solid var(--border-platinum);
       margin-bottom: 16px;
+      position: relative;
     }
 
-    .title { font-size: 1.25rem; font-weight: 700; letter-spacing: 0.5px; color: #FFF; }
-    .subtitle { font-size: 0.8rem; color: var(--text-muted); }
+    /* Platinum Text Metallic Gradient */
+    .author-name {
+      font-size: 1.5rem;
+      font-weight: 900;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      background: linear-gradient(135deg, #FFFFFF 0%, #E5E4E2 25%, #7D7D7D 50%, #FFFFFF 75%, #B5B5B5 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      text-shadow: 0 0 20px rgba(229, 228, 226, 0.3);
+    }
 
+    .sub-header {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--plat-dark);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-top: 4px;
+    }
+
+    .live-badge {
+      position: absolute;
+      right: 12px;
+      top: 4px;
+      font-size: 0.75rem;
+      color: #E5E4E2;
+      font-weight: 700;
+      letter-spacing: 1px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .live-dot {
+      width: 8px;
+      height: 8px;
+      background: #FFFFFF;
+      border-radius: 50%;
+      box-shadow: 0 0 10px #FFFFFF;
+    }
+
+    /* Main Grid Layout */
     .main-container {
       display: grid;
-      grid-template-columns: 320px 1fr;
+      grid-template-columns: 330px 1fr;
       gap: 16px;
       flex: 1;
       min-height: 0;
     }
 
+    /* Platinum Metallic Panel Box */
     .panel {
-      background: var(--panel-bg);
-      border: 1px solid var(--border-color);
-      border-radius: 8px;
-      padding: 16px;
+      background: linear-gradient(180deg, #0A0D12 0%, #040507 100%);
+      border: 1px solid var(--border-platinum);
+      border-radius: 10px;
+      padding: 18px;
       display: flex;
       flex-direction: column;
-      gap: 16px;
+      gap: 18px;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1), 0 10px 30px rgba(0, 0, 0, 0.8);
+      position: relative;
     }
 
     /* Metrics Grid */
@@ -68,105 +123,163 @@
     }
 
     .metric-card {
-      background: rgba(255, 255, 255, 0.03);
-      border: 1px solid var(--border-color);
-      border-radius: 6px;
-      padding: 12px;
+      background: linear-gradient(145deg, #0D1117 0%, #05070A 100%);
+      border: 1px solid rgba(229, 228, 226, 0.2);
+      border-radius: 8px;
+      padding: 12px 14px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
     }
 
-    .metric-label { font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; margin-bottom: 4px; }
-    .metric-value { font-size: 1.3rem; font-weight: 700; color: #FFF; }
+    .metric-label {
+      font-size: 0.7rem;
+      color: var(--plat-dark);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 6px;
+    }
+
+    .metric-value {
+      font-size: 1.35rem;
+      font-weight: 800;
+      color: #FFFFFF;
+      text-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
+    }
 
     /* Controls */
     .control-group { display: flex; flex-direction: column; gap: 8px; }
-    label { font-size: 0.85rem; font-weight: 600; color: var(--text-muted); display: flex; justify-content: space-between; }
-    input[type="range"] { width: 100%; accent-color: var(--accent-blue); cursor: pointer; }
     
-    .btn {
-      background: var(--accent-blue);
-      color: #FFF;
-      border: none;
-      padding: 12px;
-      border-radius: 6px;
+    label {
+      font-size: 0.8rem;
       font-weight: 700;
-      cursor: pointer;
-      transition: background 0.2s ease;
-      text-transform: uppercase;
+      color: var(--plat-mid);
+      display: flex;
+      justify-content: space-between;
       letter-spacing: 0.5px;
     }
-    .btn:hover { background: #2563EB; }
+
+    /* Platinum Styled Slider */
+    input[type="range"] {
+      width: 100%;
+      height: 6px;
+      background: #1A202C;
+      border-radius: 3px;
+      outline: none;
+      -webkit-appearance: none;
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #FFFFFF, #999999);
+      cursor: pointer;
+      box-shadow: 0 0 10px rgba(255, 255, 255, 0.8);
+      border: 1px solid #FFFFFF;
+    }
+
+    /* Platinum Metallic Action Button */
+    .btn-plat {
+      background: linear-gradient(135deg, #FFFFFF 0%, #C0C0C0 50%, #808080 100%);
+      color: #000000;
+      border: none;
+      padding: 14px;
+      border-radius: 6px;
+      font-weight: 900;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      box-shadow: 0 4px 15px rgba(255, 255, 255, 0.15);
+    }
+
+    .btn-plat:hover {
+      background: linear-gradient(135deg, #FFFFFF 0%, #E5E4E2 50%, #A9A9A9 100%);
+      box-shadow: 0 0 20px rgba(255, 255, 255, 0.4);
+      transform: translateY(-1px);
+    }
 
     /* Chart Container */
-    .chart-container { position: relative; flex: 1; min-height: 0; }
+    .chart-container {
+      position: relative;
+      flex: 1;
+      min-height: 0;
+    }
 
     /* Status Bar */
     .status-box {
-      background: rgba(59, 130, 246, 0.1);
-      border-left: 4px solid var(--accent-blue);
-      padding: 10px;
-      font-size: 0.85rem;
+      background: rgba(229, 228, 226, 0.05);
+      border-left: 3px solid var(--plat-mid);
+      padding: 12px;
+      font-size: 0.8rem;
       border-radius: 4px;
+      color: var(--plat-mid);
+      line-height: 1.4;
     }
   </style>
 </head>
 <body>
 
+  <!-- Top Centered Metallic Header -->
   <header>
-    <div>
-      <div class="title">QUANT-DEPTH // CAD-MXN LIQUIDITY SIMULATOR</div>
-      <div class="subtitle">Microstructure Analysis: Algorithmic Order Book Sweeps</div>
+    <div class="author-name">MATTHEW PIERCE</div>
+    <div class="sub-header">QUANT-DEPTH // CAD-MXN LIQUIDITY VACUUM ENGINE</div>
+    <div class="live-badge">
+      <div class="live-dot"></div> PLATINUM TERMINAL
     </div>
-    <div style="font-size:0.8rem; color: var(--accent-green); font-weight:600;">● LIVE ENGINE READY</div>
   </header>
 
   <div class="main-container">
     <!-- Left Control Panel -->
     <div class="panel">
-      <h3 style="font-size: 0.95rem; text-transform: uppercase; color: var(--text-muted);">Parameters</h3>
+      <h3 style="font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px; color: var(--plat-dark);">Control Console</h3>
       
       <div class="control-group">
-        <label>Market Liquidity Depth <span id="depth-val">15% (Illiquid 3 AM)</span></label>
+        <label>Liquidity Depth <span id="depth-val" style="color: #FFF;">15% (3 AM Illiquid)</span></label>
         <input type="range" id="depth" min="5" max="100" value="15">
       </div>
 
       <div class="control-group">
-        <label>Order Size ($CAD) <span id="order-val">$50M</span></label>
+        <label>Institutional Buy <span id="order-val" style="color: #FFF;">$50M CAD</span></label>
         <input type="range" id="order" min="10" max="100" value="50" step="10">
       </div>
 
       <div class="control-group" style="flex-direction:row; justify-content:space-between; align-items:center;">
         <label style="margin:0;">Trigger Stop-Losses</label>
-        <input type="checkbox" id="stoploss" checked style="width:18px; height:18px; accent-color: var(--accent-blue);">
+        <input type="checkbox" id="stoploss" checked style="width:18px; height:18px; accent-color: #E5E4E2;">
       </div>
 
-      <button class="btn" onclick="runSimulation()">Run Order Sweep</button>
+      <button class="btn-plat" onclick="runSimulation()">RUN ORDER SWEEP</button>
 
       <div class="status-box" id="status-text">
-        Adjust liquidity depth and run the sweep to observe order book slippage.
+        System initialized. Adjust parameters and execute order sweep to observe microstructural price movement.
       </div>
     </div>
 
     <!-- Right Dashboard -->
     <div style="display:flex; flex-direction:column; gap:16px;">
+      <!-- Metric Cards -->
       <div class="metrics-grid">
         <div class="metric-card">
-          <div class="metric-label">Spot Baseline</div>
+          <div class="metric-label">Spot Anchor</div>
           <div class="metric-value">12.30 MXN</div>
         </div>
         <div class="metric-card">
-          <div class="metric-label">Peak Execution Price</div>
-          <div class="metric-value" id="m-peak" style="color: var(--accent-red);">--</div>
+          <div class="metric-label">Peak Execution</div>
+          <div class="metric-value" id="m-peak" style="color: var(--plat-light);">--</div>
         </div>
         <div class="metric-card">
-          <div class="metric-label">Order Slippage</div>
-          <div class="metric-value" id="m-slippage">--</div>
+          <div class="metric-label">Slippage Impact</div>
+          <div class="metric-value" id="m-slippage" style="color: var(--plat-mid);">--</div>
         </div>
         <div class="metric-card">
-          <div class="metric-label">Liquidity Recovery</div>
-          <div class="metric-value" id="m-recovery" style="color: var(--accent-blue);">12.90 MXN</div>
+          <div class="metric-label">Mean Reversion</div>
+          <div class="metric-value" id="m-recovery" style="color: var(--plat-light);">12.90 MXN</div>
         </div>
       </div>
 
+      <!-- Chart Panel -->
       <div class="panel chart-container">
         <canvas id="fxChart"></canvas>
       </div>
@@ -177,21 +290,28 @@
     let chart;
     const ctx = document.getElementById('fxChart').getContext('2d');
 
-    // Initialize Chart
+    // Gradient Creator for Silver Chart Fill
+    let gradientFill = ctx.createLinearGradient(0, 0, 0, 400);
+    gradientFill.addColorStop(0, 'rgba(255, 255, 255, 0.25)');
+    gradientFill.addColorStop(1, 'rgba(255, 255, 255, 0.0)');
+
     function initChart() {
       chart = new Chart(ctx, {
         type: 'line',
         data: {
           labels: ['02:00 AM', '02:30 AM', '03:00 AM (Order)', '03:05 AM (Peak)', '03:30 AM (Drop)', '08:00 AM (Open)'],
           datasets: [{
-            label: 'CAD/MXN Exchange Rate',
+            label: 'CAD/MXN Spot Rate',
             data: [12.30, 12.30, 12.30, 12.30, 12.30, 12.30],
-            borderColor: '#3B82F6',
+            borderColor: '#FFFFFF',
             borderWidth: 3,
             fill: true,
-            backgroundColor: 'rgba(59, 130, 246, 0.05)',
-            tension: 0.3,
-            pointRadius: 5
+            backgroundColor: gradientFill,
+            tension: 0.25,
+            pointBackgroundColor: '#FFFFFF',
+            pointBorderColor: '#000000',
+            pointRadius: 6,
+            pointHoverRadius: 9
           }]
         },
         options: {
@@ -202,12 +322,12 @@
             y: {
               min: 12.00,
               max: 13.20,
-              grid: { color: '#2A364F' },
-              ticks: { color: '#94A3B8' }
+              grid: { color: 'rgba(229, 228, 226, 0.1)' },
+              ticks: { color: '#8C8C8C', font: { weight: '600' } }
             },
             x: {
-              grid: { color: '#2A364F' },
-              ticks: { color: '#94A3B8' }
+              grid: { color: 'rgba(229, 228, 226, 0.1)' },
+              ticks: { color: '#8C8C8C', font: { weight: '600' } }
             }
           }
         }
@@ -217,20 +337,19 @@
     // UI Updates
     document.getElementById('depth').addEventListener('input', (e) => {
       const v = e.target.value;
-      document.getElementById('depth-val').innerText = v < 30 ? `${v}% (Illiquid 3 AM)` : `${v}% (Active Market)`;
+      document.getElementById('depth-val').innerText = v < 30 ? `${v}% (3 AM Illiquid)` : `${v}% (Active Market)`;
     });
 
     document.getElementById('order').addEventListener('input', (e) => {
-      document.getElementById('order-val').innerText = `$${e.target.value}M`;
+      document.getElementById('order-val').innerText = `$${e.target.value}M CAD`;
     });
 
-    // Simulation Engine
+    // Simulation Execution Engine
     function runSimulation() {
       const depth = parseInt(document.getElementById('depth').value);
       const order = parseInt(document.getElementById('order').value);
       const stoploss = document.getElementById('stoploss').checked;
 
-      // Calculate Spike Magnitude based on market depth & order size
       const impactFactor = (order / depth) * 0.22;
       const peakPrice = Math.min(13.10, 12.30 + impactFactor).toFixed(2);
       const slippage = (((peakPrice - 12.30) / 12.30) * 100).toFixed(2);
@@ -238,11 +357,9 @@
       const dropPrice = stoploss ? 12.32 : (12.30 + (impactFactor * 0.4)).toFixed(2);
       const finalRecovery = 12.90;
 
-      // Metrics Update
       document.getElementById('m-peak').innerText = `${peakPrice} MXN`;
       document.getElementById('m-slippage').innerText = `+${slippage}%`;
 
-      // Animate Chart Data Step-by-Step
       const newData = [12.30, 12.31, 12.30, parseFloat(peakPrice), parseFloat(dropPrice), finalRecovery];
       
       chart.data.datasets[0].data = [12.30, 12.30, 12.30, 12.30, 12.30, 12.30];
@@ -255,14 +372,17 @@
         chart.data.datasets[0].data[i] = newData[i];
         
         if (i === 3) {
-          chart.data.datasets[0].borderColor = '#EF4444';
-          statusText.innerText = `[3:05 AM] LIQUIDITY VACUUM DETECTED: Large buy order swept thin order book up to ${peakPrice} MXN!`;
+          chart.data.datasets[0].borderColor = '#FF4D4D'; // Platinum Red (Spike)
+          chart.data.datasets[0].pointBackgroundColor = '#FF4D4D';
+          statusText.innerText = `[03:05 AM] LIQUIDITY VACUUM: $${order}M order swept thin order book up to ${peakPrice} MXN.`;
         } else if (i === 4) {
-          chart.data.datasets[0].borderColor = '#10B981';
-          statusText.innerText = `[3:30 AM] REVERSAL: Stop-loss cascades executed. Price slammed back down to ${dropPrice} MXN.`;
+          chart.data.datasets[0].borderColor = '#00E676'; // Platinum Green (Reversal)
+          chart.data.datasets[0].pointBackgroundColor = '#00E676';
+          statusText.innerText = `[03:30 AM] REVERSAL CASCADE: Automated stop-loss liquidations slammed spot back to ${dropPrice} MXN.`;
         } else if (i === 5) {
-          chart.data.datasets[0].borderColor = '#3B82F6';
-          statusText.innerText = `[08:00 AM] MEAN REVERSION: Market makers re-entered to capture discount, stabilizing pair at 12.90 MXN.`;
+          chart.data.datasets[0].borderColor = '#FFFFFF'; // Silver Platinum Final
+          chart.data.datasets[0].pointBackgroundColor = '#FFFFFF';
+          statusText.innerText = `[08:00 AM] MEAN REVERSION: Institutional algorithms re-entered market, stabilizing rate at 12.90 MXN.`;
         }
 
         chart.update();
