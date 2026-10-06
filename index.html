@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>QUANT-DEPTH: CAD/MXN Liquidity Vacuum Simulator</title>
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    :root {
+      --bg-dark: #0B0E14;
+      --panel-bg: #151D2A;
+      --border-color: #2A364F;
+      --accent-blue: #3B82F6;
+      --accent-green: #10B981;
+      --accent-red: #EF4444;
+      --text-main: #F8FAFC;
+      --text-muted: #94A3B8;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+
+    body {
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      overflow: hidden;
+      padding: 16px;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--border-color);
+      margin-bottom: 16px;
+    }
+
+    .title { font-size: 1.25rem; font-weight: 700; letter-spacing: 0.5px; color: #FFF; }
+    .subtitle { font-size: 0.8rem; color: var(--text-muted); }
+
+    .main-container {
+      display: grid;
+      grid-template-columns: 320px 1fr;
+      gap: 16px;
+      flex: 1;
+      min-height: 0;
+    }
+
+    .panel {
+      background: var(--panel-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    /* Metrics Grid */
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+    }
+
+    .metric-card {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      padding: 12px;
+    }
+
+    .metric-label { font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; margin-bottom: 4px; }
+    .metric-value { font-size: 1.3rem; font-weight: 700; color: #FFF; }
+
+    /* Controls */
+    .control-group { display: flex; flex-direction: column; gap: 8px; }
+    label { font-size: 0.85rem; font-weight: 600; color: var(--text-muted); display: flex; justify-content: space-between; }
+    input[type="range"] { width: 100%; accent-color: var(--accent-blue); cursor: pointer; }
+    
+    .btn {
+      background: var(--accent-blue);
+      color: #FFF;
+      border: none;
+      padding: 12px;
+      border-radius: 6px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.2s ease;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .btn:hover { background: #2563EB; }
+
+    /* Chart Container */
+    .chart-container { position: relative; flex: 1; min-height: 0; }
+
+    /* Status Bar */
+    .status-box {
+      background: rgba(59, 130, 246, 0.1);
+      border-left: 4px solid var(--accent-blue);
+      padding: 10px;
+      font-size: 0.85rem;
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div>
+      <div class="title">QUANT-DEPTH // CAD-MXN LIQUIDITY SIMULATOR</div>
+      <div class="subtitle">Microstructure Analysis: Algorithmic Order Book Sweeps</div>
+    </div>
+    <div style="font-size:0.8rem; color: var(--accent-green); font-weight:600;">● LIVE ENGINE READY</div>
+  </header>
+
+  <div class="main-container">
+    <!-- Left Control Panel -->
+    <div class="panel">
+      <h3 style="font-size: 0.95rem; text-transform: uppercase; color: var(--text-muted);">Parameters</h3>
+      
+      <div class="control-group">
+        <label>Market Liquidity Depth <span id="depth-val">15% (Illiquid 3 AM)</span></label>
+        <input type="range" id="depth" min="5" max="100" value="15">
+      </div>
+
+      <div class="control-group">
+        <label>Order Size ($CAD) <span id="order-val">$50M</span></label>
+        <input type="range" id="order" min="10" max="100" value="50" step="10">
+      </div>
+
+      <div class="control-group" style="flex-direction:row; justify-content:space-between; align-items:center;">
+        <label style="margin:0;">Trigger Stop-Losses</label>
+        <input type="checkbox" id="stoploss" checked style="width:18px; height:18px; accent-color: var(--accent-blue);">
+      </div>
+
+      <button class="btn" onclick="runSimulation()">Run Order Sweep</button>
+
+      <div class="status-box" id="status-text">
+        Adjust liquidity depth and run the sweep to observe order book slippage.
+      </div>
+    </div>
+
+    <!-- Right Dashboard -->
+    <div style="display:flex; flex-direction:column; gap:16px;">
+      <div class="metrics-grid">
+        <div class="metric-card">
+          <div class="metric-label">Spot Baseline</div>
+          <div class="metric-value">12.30 MXN</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Peak Execution Price</div>
+          <div class="metric-value" id="m-peak" style="color: var(--accent-red);">--</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Order Slippage</div>
+          <div class="metric-value" id="m-slippage">--</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Liquidity Recovery</div>
+          <div class="metric-value" id="m-recovery" style="color: var(--accent-blue);">12.90 MXN</div>
+        </div>
+      </div>
+
+      <div class="panel chart-container">
+        <canvas id="fxChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let chart;
+    const ctx = document.getElementById('fxChart').getContext('2d');
+
+    // Initialize Chart
+    function initChart() {
+      chart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: ['02:00 AM', '02:30 AM', '03:00 AM (Order)', '03:05 AM (Peak)', '03:30 AM (Drop)', '08:00 AM (Open)'],
+          datasets: [{
+            label: 'CAD/MXN Exchange Rate',
+            data: [12.30, 12.30, 12.30, 12.30, 12.30, 12.30],
+            borderColor: '#3B82F6',
+            borderWidth: 3,
+            fill: true,
+            backgroundColor: 'rgba(59, 130, 246, 0.05)',
+            tension: 0.3,
+            pointRadius: 5
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            y: {
+              min: 12.00,
+              max: 13.20,
+              grid: { color: '#2A364F' },
+              ticks: { color: '#94A3B8' }
+            },
+            x: {
+              grid: { color: '#2A364F' },
+              ticks: { color: '#94A3B8' }
+            }
+          }
+        }
+      });
+    }
+
+    // UI Updates
+    document.getElementById('depth').addEventListener('input', (e) => {
+      const v = e.target.value;
+      document.getElementById('depth-val').innerText = v < 30 ? `${v}% (Illiquid 3 AM)` : `${v}% (Active Market)`;
+    });
+
+    document.getElementById('order').addEventListener('input', (e) => {
+      document.getElementById('order-val').innerText = `$${e.target.value}M`;
+    });
+
+    // Simulation Engine
+    function runSimulation() {
+      const depth = parseInt(document.getElementById('depth').value);
+      const order = parseInt(document.getElementById('order').value);
+      const stoploss = document.getElementById('stoploss').checked;
+
+      // Calculate Spike Magnitude based on market depth & order size
+      const impactFactor = (order / depth) * 0.22;
+      const peakPrice = Math.min(13.10, 12.30 + impactFactor).toFixed(2);
+      const slippage = (((peakPrice - 12.30) / 12.30) * 100).toFixed(2);
+      
+      const dropPrice = stoploss ? 12.32 : (12.30 + (impactFactor * 0.4)).toFixed(2);
+      const finalRecovery = 12.90;
+
+      // Metrics Update
+      document.getElementById('m-peak').innerText = `${peakPrice} MXN`;
+      document.getElementById('m-slippage').innerText = `+${slippage}%`;
+
+      // Animate Chart Data Step-by-Step
+      const newData = [12.30, 12.31, 12.30, parseFloat(peakPrice), parseFloat(dropPrice), finalRecovery];
+      
+      chart.data.datasets[0].data = [12.30, 12.30, 12.30, 12.30, 12.30, 12.30];
+      chart.update();
+
+      let i = 0;
+      const statusText = document.getElementById('status-text');
+      
+      const interval = setInterval(() => {
+        chart.data.datasets[0].data[i] = newData[i];
+        
+        if (i === 3) {
+          chart.data.datasets[0].borderColor = '#EF4444';
+          statusText.innerText = `[3:05 AM] LIQUIDITY VACUUM DETECTED: Large buy order swept thin order book up to ${peakPrice} MXN!`;
+        } else if (i === 4) {
+          chart.data.datasets[0].borderColor = '#10B981';
+          statusText.innerText = `[3:30 AM] REVERSAL: Stop-loss cascades executed. Price slammed back down to ${dropPrice} MXN.`;
+        } else if (i === 5) {
+          chart.data.datasets[0].borderColor = '#3B82F6';
+          statusText.innerText = `[08:00 AM] MEAN REVERSION: Market makers re-entered to capture discount, stabilizing pair at 12.90 MXN.`;
+        }
+
+        chart.update();
+        i++;
+        if (i >= newData.length) clearInterval(interval);
+      }, 400);
+    }
+
+    window.onload = initChart;
+  </script>
+</body>
+</html>
